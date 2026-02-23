@@ -18,8 +18,6 @@
     "lightroom_path": "C:\\Program Files\\Adobe\\Adobe Lightroom Classic\\Lightroom.exe",
     "lightroom_process_name": "Lightroom.exe",
     "lightroom_window_title_contains": "Lightroom",
-    "base_catalog_path": "C:\\Automation\\Base\\Base.lrcat",
-    "work_catalog_path": "C:\\Automation\\Today_Session.lrcat",
     "extra_programs": [
         {
             "name": "Evoto",
@@ -92,14 +90,8 @@
         {
             "action": "key",
             "value": "enter",
-            "delay_after_ms": 700,
+            "delay_after_ms": 500,
             "comment": "연결전송된 촬영 시작 선택"
-        },
-        {
-            "action": "key",
-            "value": "enter",
-            "delay_after_ms": 300,
-            "comment": "설정 팝업창 무조건 자동 확인 (OK)"
         }
     ],
     "export_all_sequence": [
@@ -133,7 +125,7 @@
         "theme": "sage_garden"
     },
     "delays": {
-        "app_launch_wait_ms": 12000,
+        "app_launch_wait_ms": 5000,
         "window_activation_wait_ms": 500,
         "between_key_default_ms": 100
     }

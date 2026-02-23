@@ -244,11 +244,18 @@ class WindowsController:
         def enum_callback(hwnd, _):
             if win32gui.IsWindowVisible(hwnd):
                 title = win32gui.GetWindowText(hwnd)
+                # 'Lightroom'이 포함되어 있는지 확인
                 if title_contains.lower() in title.lower():
-                    result.append(hwnd)
+                    result.append((hwnd, title))
             return True
         win32gui.EnumWindows(enum_callback, None)
-        return result[0] if result else None
+        
+        # 이름이 가장 긴 창을 우선 선택 (스플래시 화면 등 제외)
+        if result:
+            result.sort(key=lambda x: len(x[1]), reverse=True)
+            log.info('선택된 타이틀: %s', result[0][1])
+            return result[0][0]
+        return None
 
     def activate_window(self, hwnd: int) -> bool:
         if not WINDOWS_AVAILABLE or not hwnd:
@@ -325,36 +332,48 @@ class MacroActions:
     def start_tether(self):
         log.info('테더링: 라이트룸 실행 확인 중...')
         if not self.win.ensure_lightroom_running():
-            return '라이트룸 실행 실패'
+            raise Exception('라이트룸이 실행되지 않았습니다.')
             
         log.info('테더링: 최초 포커스 확인 중...')
         if not self.win.wait_for_lightroom_focus():
-            return '라이트룸 포커스 실패'
+            raise Exception('라이트룸을 포커스할 수 없습니다.')
             
-        # [중요] 라이트룸이 완전히 로드될 때까지 추가 대기 (오리지널 코드)
+        # 라이트룸이 완전히 로드될 때까지 추가 대기
         log.info('테더링: 로드 대기 3초...')
         time.sleep(3.0)
         
-        # 다시 한번 포커스 확인 (오리지널 코드)
+        # 다시 한번 포커스 확인
         log.info('테더링: 2차 포커스 활성화 중...')
         self.win.activate_lightroom()
         time.sleep(1.0)
         
-        log.info('테더링: 매크로 단축키 입력 시작...')
-        keyboard.send('alt+f')
-        time.sleep(0.5)
-        for _ in range(8):
-            keyboard.send('down')
-            time.sleep(0.1)
-        keyboard.send('right')
-        time.sleep(0.3)
-        keyboard.send('enter')
-        time.sleep(0.5) # 오리지널 값
+        log.info('테더링: config.json의 tether_start_sequence 실행 시작...')
+        sequence = self.config.get('tether_start_sequence', [])
+        if not sequence:
+            log.warning('config.json에 tether_start_sequence가 없습니다. 기본 시퀀스는 실행하지 않습니다.')
+            raise Exception('tether_start_sequence가 비어있습니다.')
+            
+        for step in sequence:
+            action = step.get('action')
+            value = step.get('value')
+            delay_ms = step.get('delay_after_ms', 100)
+            comment = step.get('comment', '')
+            
+            if action == 'key':
+                log.info(' [단축키] %s (%s)', value, comment)
+                keyboard.send(value)
+            
+            if delay_ms > 0:
+                time.sleep(delay_ms / 1000.0)
         
+        # 시퀀스 종류 후 테더링 세션 설정
+        log.info('테더링: 세션 이름 입력 및 확인 시작...')
         session_name = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        
+        # 세션 이름 타이핑
         keyboard.write(session_name)
         
-        # Tab 4번 후 시퀀스 번호 1로 초기화 (오리지널 코드)
+        # Tab 4번 후 시퀀스 번호 1로 초기화 (오리지널 코드 유지)
         time.sleep(0.3)
         keyboard.send('tab')
         time.sleep(0.2)
@@ -369,7 +388,8 @@ class MacroActions:
         time.sleep(0.3)
         keyboard.send('enter')
         
-        # 테더링 세션 초기화 대기 (오리지널 코드)
+        # 테더링 세션 초기화 대기
+        log.info('테더링: 세션 초기화 대기 2초...')
         time.sleep(2.0)
         
         keyboard.send('ctrl+alt+1')
@@ -498,12 +518,17 @@ class WorkflowEngine:
     # ── 내부 워크플로우 ──
 
     def _run_workflow(self, minutes: int):
+        # 1. 테더링 매크로 시작
         try:
             result = self.actions.start_tether()
             log.info('테더링: %s', result)
         except Exception as e:
-            log.error('start_tether 오류: %s', e)
+            log.error('테더링 매크로 실패: %s', e)
+            with self._lock:
+                self._running = False
+            return  # 실패 시 여기서 종료하여 타이머 및 효과음을 실행하지 않음
 
+        # 2. 타이머 및 오디오 재생 시작
         self.timer = SessionTimer(
             minutes,
             on_remind=lambda msg: log.info('알림: %s', msg),
