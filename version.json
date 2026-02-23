@@ -1,0 +1,5 @@
+{
+    "version": "0.1",
+    "release_date": "2026-02-22",
+    "message": "Headless 자동화 및 HASS.Agent 연동 기능 도입, 깡통 카탈로그 초기화 적용."
+}

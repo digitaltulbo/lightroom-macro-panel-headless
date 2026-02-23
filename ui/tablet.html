@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Studio Birthday</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F5F0E8;
+            --warm-white: #FAF7F2;
+            --gold: #C9A84C;
+            --gold-light: #E8C97A;
+            --dark: #0D0B08;
+            --dark-2: #1A1712;
+            --dark-3: #2A2520;
+            --muted: #7A7268;
+            --border: rgba(201, 168, 76, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            position: relative;
+        }
+
+        /* 배경 텍스처 */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 168, 76, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(201, 168, 76, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* 상단 로고 영역 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 32px 48px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 13px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 400;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .current-time {
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            color: var(--muted);
+            letter-spacing: 2px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main {
+            width: 100%;
+            max-width: 900px;
+            padding: 120px 48px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── 대기 화면 ── */
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* 대기 화면 */
+        .welcome-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .welcome-title {
+            font-size: clamp(52px, 8vw, 88px);
+            font-weight: 300;
+            color: var(--cream);
+            text-align: center;
+            line-height: 1.05;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .welcome-title em {
+            font-style: italic;
+            color: var(--gold-light);
+        }
+
+        .welcome-sub {
+            font-size: 20px;
+            color: var(--muted);
+            text-align: center;
+            font-weight: 300;
+            margin-bottom: 72px;
+            letter-spacing: 0.5px;
+        }
+
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: var(--border);
+            margin: 0 auto 72px;
+        }
+
+        /* 패키지 버튼 */
+        .package-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            width: 100%;
+        }
+
+        .pkg-btn {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 52px 40px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--dark-2);
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .pkg-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 50%, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .pkg-btn:active {
+            transform: scale(0.98);
+        }
+
+        .pkg-btn:hover::before,
+        .pkg-btn:active::before {
+            opacity: 1;
+        }
+
+        .pkg-btn.premium {
+            border-color: rgba(201, 168, 76, 0.4);
+        }
+
+        .pkg-btn.premium:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 40px rgba(201, 168, 76, 0.15), inset 0 0 40px rgba(201, 168, 76, 0.05);
+        }
+
+        .pkg-btn.basic:hover {
+            border-color: rgba(245, 240, 232, 0.3);
+            box-shadow: 0 0 30px rgba(245, 240, 232, 0.05);
+        }
+
+        .pkg-tag {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .pkg-btn.basic .pkg-tag {
+            color: var(--muted);
+        }
+
+        .pkg-btn.premium .pkg-tag {
+            color: var(--gold);
+        }
+
+        .pkg-name {
+            font-size: 38px;
+            font-weight: 300;
+            color: var(--cream);
+            display: block;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .pkg-btn.premium .pkg-name {
+            color: var(--gold-light);
+        }
+
+        .pkg-duration {
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 32px;
+        }
+
+        .pkg-arrow {
+            font-size: 24px;
+            color: var(--border);
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        .pkg-btn:hover .pkg-arrow {
+            color: var(--gold);
+            transform: translateX(6px);
+        }
+
+        .pkg-btn.basic:hover .pkg-arrow {
+            color: var(--cream);
+        }
+
+        /* 골드 코너 장식 */
+        .pkg-btn.premium::after {
+            content: '★';
+            position: absolute;
+            top: 24px;
+            right: 28px;
+            font-size: 18px;
+            color: var(--gold);
+            opacity: 0.6;
+        }
+
+        /* ── 타이머 화면 ── */
+        .timer-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .timer-ring-wrap {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin-bottom: 56px;
+        }
+
+        .timer-ring-svg {
+            position: absolute;
+            inset: 0;
+            transform: rotate(-90deg);
+        }
+
+        .ring-track {
+            fill: none;
+            stroke: var(--dark-3);
+            stroke-width: 3;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 3;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .ring-progress.warning {
+            stroke: #E8974A;
+        }
+
+        .ring-progress.critical {
+            stroke: #E84A4A;
+        }
+
+        .timer-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-digits {
+            font-family: 'DM Mono', monospace;
+            font-size: 72px;
+            font-weight: 300;
+            color: var(--cream);
+            letter-spacing: -2px;
+            line-height: 1;
+            transition: color 0.5s ease;
+        }
+
+        .timer-digits.warning {
+            color: #E8974A;
+        }
+
+        .timer-digits.critical {
+            color: #E84A4A;
+        }
+
+        .timer-label-sm {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--muted);
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .session-info {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .session-package {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--cream);
+            letter-spacing: 1px;
+        }
+
+        .session-package.premium-text {
+            color: var(--gold-light);
+        }
+
+        .session-desc {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+
+        /* 알림 팝업 */
+        .alert-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 11, 8, 0.92);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .alert-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .alert-box {
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            padding: 64px 80px;
+            text-align: center;
+            max-width: 520px;
+            background: var(--dark-2);
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .alert-overlay.show .alert-box {
+            transform: translateY(0);
+        }
+
+        .alert-icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .alert-title {
+            font-size: 36px;
+            font-weight: 300;
+            color: var(--gold-light);
+            margin-bottom: 16px;
+        }
+
+        .alert-body {
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            line-height: 1.8;
+        }
+
+        /* 하단 안내 */
+        .footer-tip {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 48px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .tip-rotate {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-align: center;
+            transition: opacity 0.6s ease;
+        }
+
+        /* 연결 상태 */
+        .conn-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+            display: inline-block;
+            margin-right: 8px;
+            transition: background 0.3s;
+        }
+
+        .conn-dot.online {
+            background: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+
+        .conn-dot.offline {
+            background: #E84A4A;
+        }
+
+        /* 리플 */
+        @keyframes ripple {
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .ripple-el {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, 0.2);
+            width: 60px;
+            height: 60px;
+            margin: -30px;
+            animation: ripple 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .screen.active {
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="logo">Studio Birthday</div>
+        <div class="current-time">
+            <span id="versionEl" style="margin-right: 12px; color: var(--gold-light); font-size: 11px;">v0.1</span>
+            <span class="conn-dot" id="connDot"></span>
+            <span id="clockEl">--:--</span>
+        </div>
+    </header>
+
+    <!-- ── 대기 화면 ── -->
+    <div class="main">
+        <div class="screen active" id="screenWelcome">
+            <div class="welcome-eyebrow">환영합니다</div>
+            <h1 class="welcome-title">오늘의 촬영을<br><em>시작해볼까요</em></h1>
+            <p class="welcome-sub">패키지를 선택하면 자동으로 준비됩니다</p>
+            <div class="divider"></div>
+            <div class="package-grid">
+                <div class="pkg-btn basic" onclick="selectPackage('basic', 30, this)">
+                    <span class="pkg-tag">Basic Package</span>
+                    <span class="pkg-name">베이직</span>
+                    <span class="pkg-duration">30분 촬영</span>
+                    <span class="pkg-arrow">→</span>
+                </div>
+                <div class="pkg-btn premium" onclick="selectPackage('premium', 55, this)">
+                    <span class="pkg-tag">Premium Package</span>
+                    <span class="pkg-name">프리미엄</span>
+                    <span class="pkg-duration">55분 촬영</span>
+                    <span class="pkg-arrow">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 타이머 화면 ── -->
+        <div class="screen" id="screenTimer">
+            <div class="timer-eyebrow" id="timerEyebrow">촬영 진행 중</div>
+            <div class="timer-ring-wrap">
+                <svg class="timer-ring-svg" viewBox="0 0 320 320">
+                    <circle class="ring-track" cx="160" cy="160" r="148" />
+                    <circle class="ring-progress" id="ringProgress" cx="160" cy="160" r="148" stroke-dasharray="930"
+                        stroke-dashoffset="0" />
+                </svg>
+                <div class="timer-center">
+                    <div class="timer-digits" id="timerDigits">--:--</div>
+                    <div class="timer-label-sm">남은 시간</div>
+                </div>
+            </div>
+            <div class="session-info">
+                <div class="session-package" id="sessionPackage">— 패키지 —</div>
+                <div class="session-desc" id="sessionDesc">촬영을 즐겨주세요</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 알림 팝업 -->
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box">
+            <div class="alert-icon" id="alertIcon">⏰</div>
+            <div class="alert-title" id="alertTitle">알림</div>
+            <div class="alert-body" id="alertBody"></div>
+        </div>
+    </div>
+
+    <footer class="footer-tip">
+        <div class="tip-rotate" id="tipEl"></div>
+    </footer>
+
+    <script>
+        const API = window.location.origin;
+        let totalSeconds = 0;
+        let currentPackage = null;
+        let pollingTimer = null;
+
+        const tips = [
+            '촬영이 끝나면 사진을 꼭 내보내기 해주세요',
+            '보조 모니터에서 결과물을 실시간으로 확인하세요',
+            '압축 완료 후 USB 또는 이메일로 전송 가능합니다',
+            '좋은 사진이 나오길 바랍니다 ✨'
+        ];
+        let tipIdx = 0;
+
+        // ── 시계 ──
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clockEl').textContent =
+                String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ── 팁 로테이션 ──
+        function rotateTip() {
+            const el = document.getElementById('tipEl');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.textContent = tips[tipIdx++ % tips.length];
+                el.style.opacity = '1';
+            }, 600);
+        }
+        rotateTip();
+        setInterval(rotateTip, 9000);
+
+        // ── 연결 상태 체크 ──
+        async function checkConn() {
+            const dot = document.getElementById('connDot');
+            try {
+                const r = await fetch(API + '/status', { signal: AbortSignal.timeout(2000) });
+                if (r.ok) {
+                    dot.className = 'conn-dot online';
+                    const data = await r.json();
+
+                    // 버전 업데이트
+                    if (data.version) {
+                        document.getElementById('versionEl').textContent = 'v' + data.version;
+                    }
+
+                    // 서버가 이미 실행 중인 세션이 있으면 동기화
+                    if (data.running && !pollingTimer) {
+                        syncFromServer(data);
+                    }
+                    return;
+                }
+            } catch (e) { }
+            dot.className = 'conn-dot offline';
+        }
+        setInterval(checkConn, 5000);
+        checkConn();
+
+        // ── 패키지 선택 ──
+        function selectPackage(pkg, minutes, el) {
+            // 리플 효과
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple-el';
+            el.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 800);
+
+            currentPackage = pkg;
+            totalSeconds = minutes * 60;
+
+            // 서버에 시작 알림
+            fetch(API + '/webhook/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ package: pkg })
+            }).catch(() => { });  // 오프라인이어도 타이머는 로컬에서 작동
+
+            // 화면 전환
+            showTimerScreen(pkg, minutes);
+        }
+
+        // ── 타이머 화면 전환 ──
+        function showTimerScreen(pkg, minutes) {
+            const isPremium = pkg === 'premium';
+            document.getElementById('sessionPackage').textContent = isPremium ? '프리미엄 패키지' : '베이직 패키지';
+            document.getElementById('sessionPackage').className = 'session-package' + (isPremium ? ' premium-text' : '');
+            document.getElementById('sessionDesc').textContent = `${minutes}분 촬영 · 즐거운 촬영 되세요 📸`;
+            document.getElementById('timerEyebrow').textContent = '촬영 진행 중';
+
+            document.getElementById('screenWelcome').classList.remove('active');
+            document.getElementById('screenTimer').classList.add('active');
+
+            startLocalTimer(minutes * 60);
+        }
+
+        // ── 로컬 타이머 ──
+        let localRemaining = 0;
+        let localTick = null;
+
+        function startLocalTimer(seconds) {
+            clearInterval(localTick);
+            localRemaining = seconds;
+            totalSeconds = seconds;
+            updateTimerUI(seconds);
+            localTick = setInterval(() => {
+                localRemaining--;
+                updateTimerUI(localRemaining);
+                if (localRemaining <= 0) {
+                    clearInterval(localTick);
+                    onTimerEnd();
+                }
+            }, 1000);
+        }
+
+        // ── 서버 상태 동기화 ──
+        function syncFromServer(data) {
+            clearInterval(localTick);
+            totalSeconds = data.total;
+            localRemaining = data.remaining;
+            updateTimerUI(data.remaining);
+            document.getElementById('screenWelcome').classList.remove('active');
+            document.getElementById('screenTimer').classList.add('active');
+            localTick = setInterval(() => {
+                localRemaining--;
+                updateTimerUI(localRemaining);
+                if (localRemaining <= 0) {
+                    clearInterval(localTick);
+                    onTimerEnd();
+                }
+            }, 1000);
+        }
+
+        // ── UI 업데이트 ──
+        function updateTimerUI(remaining) {
+            if (remaining < 0) remaining = 0;
+            const m = Math.floor(remaining / 60);
+            const s = remaining % 60;
+            const str = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            document.getElementById('timerDigits').textContent = str;
+
+            // 링 진행
+            const circumference = 930;
+            const progress = remaining / totalSeconds;
+            const offset = circumference * (1 - progress);
+            document.getElementById('ringProgress').style.strokeDashoffset = offset;
+
+            // 색상
+            const digits = document.getElementById('timerDigits');
+            const ring = document.getElementById('ringProgress');
+            digits.className = 'timer-digits';
+            ring.className = 'ring-progress';
+            if (remaining <= 300) {
+                digits.classList.add('critical');
+                ring.classList.add('critical');
+            } else if (remaining <= 900) {
+                digits.classList.add('warning');
+                ring.classList.add('warning');
+            }
+
+            // 알림
+            if (remaining === 900) showAlert('⏰', '15분 남았습니다', '마무리 촬영을 준비해주세요');
+            if (remaining === 300) showAlert('⚡', '5분 남았습니다', '마지막 컷을 찍어주세요');
+        }
+
+        // ── 종료 ──
+        function onTimerEnd() {
+            document.getElementById('timerEyebrow').textContent = '촬영 시간 종료';
+            showAlert('🎉', '촬영이 완료되었습니다', '보조 화면에서 사진을 내보내기 해주세요');
+            setTimeout(() => {
+                document.getElementById('screenTimer').classList.remove('active');
+                document.getElementById('screenWelcome').classList.add('active');
+            }, 8000);
+        }
+
+        // ── 알림 팝업 ──
+        let alertTimer = null;
+        function showAlert(icon, title, body) {
+            document.getElementById('alertIcon').textContent = icon;
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertBody').textContent = body;
+            document.getElementById('alertOverlay').classList.add('show');
+            clearTimeout(alertTimer);
+            alertTimer = setTimeout(() => {
+                document.getElementById('alertOverlay').classList.remove('show');
+            }, 5000);
+        }
+
+        document.getElementById('alertOverlay').addEventListener('click', () => {
+            document.getElementById('alertOverlay').classList.remove('show');
+        });
+    </script>
+</body>
+
+</html>

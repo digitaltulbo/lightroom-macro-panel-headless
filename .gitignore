@@ -1,0 +1,18 @@
+# Compiled executables
+*.exe
+
+# Large media files
+ui/Crop_guide.mp4
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
