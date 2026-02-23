@@ -279,7 +279,9 @@ class WindowsController:
             for _ in range(20):
                 time.sleep(1.5)
                 if self.find_window_by_title(title_contains):
-                    time.sleep(5)
+                    launch_delay = self.config.get('delays.app_launch_wait_ms', 15000) / 1000.0
+                    log.info('라이트룸 창 감지됨. 안정화를 위해 %.1f초 대기...', launch_delay)
+                    time.sleep(launch_delay)
                     return True
         except Exception as e:
             log.error('라이트룸 실행 중 오류: %s', e)
@@ -330,8 +332,8 @@ class MacroActions:
             return '라이트룸 포커스 실패'
             
         # [중요] 라이트룸이 완전히 로드될 때까지 추가 대기 (오리지널 코드)
-        log.info('테더링: 로드 대기 2초...')
-        time.sleep(2.0)
+        log.info('테더링: 로드 대기 3초...')
+        time.sleep(3.0)
         
         # 다시 한번 포커스 확인 (오리지널 코드)
         log.info('테더링: 2차 포커스 활성화 중...')
